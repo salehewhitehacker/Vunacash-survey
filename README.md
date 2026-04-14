@@ -1,2 +1,0 @@
-# Vunacash-survey
-Welcome

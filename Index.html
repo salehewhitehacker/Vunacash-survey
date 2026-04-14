@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vuna Cash - Full App Flow</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
+
+        :root {
+            /* Rangi za Vuna Cash (Modern Fintech) */
+            --v-green: #10B981; 
+            --v-green-light: #34D399;
+            --v-navy: #0F172A; 
+            --bg-light: #F8FAFC;
+            --white: #FFFFFF;
+            --text-dark: #1E293B;
+            --text-muted: #64748B;
+            --error: #EF4444;
+            --success: #10B981;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Nunito', sans-serif; -webkit-tap-highlight-color: transparent; }
+
+        body { background-color: #E2E8F0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+
+        #app-frame { width: 100%; max-width: 414px; height: 100vh; height: 100dvh; background: var(--bg-light); position: relative; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+
+        .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow-y: auto; overflow-x: hidden; background: var(--bg-light); transition: opacity 0.4s ease, transform 0.4s ease; z-index: 10; }
+        .screen::-webkit-scrollbar { display: none; }
+        .hidden { opacity: 0; pointer-events: none; transform: scale(0.98); z-index: 0; display: none; }
+        .active-screen { opacity: 1; pointer-events: all; transform: scale(1); z-index: 10; display: block; }
+
+        /* 1. SPLASH SCREEN */
+        #splash-screen { background: var(--v-navy); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
+        .vuna-logo-large { font-size: 3rem; font-weight: 900; color: var(--white); display: flex; align-items: center; gap: 10px; margin-bottom: 30px; letter-spacing: -2px; }
+        .vuna-logo-large i { color: var(--v-green); font-size: 3.5rem; }
+        .loading-bar-bg { width: 60%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; }
+        .loading-fill { width: 0%; height: 100%; background: var(--v-green); animation: loadAnim 3s forwards; }
+        @keyframes loadAnim { 0% { width: 0%; } 50% { width: 70%; } 100% { width: 100%; } }
+
+        /* 2. ONBOARDING SCREEN */
+        #onboarding-screen { background: #000; display: flex; flex-direction: column; justify-content: flex-end; }
+        .ob-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.6; transition: 0.5s; }
+        .ob-content { position: relative; z-index: 2; padding: 40px 24px; background: linear-gradient(to top, rgba(15,23,42,1) 0%, rgba(15,23,42,0.8) 50%, transparent 100%); color: white; border-top-left-radius: 30px; border-top-right-radius: 30px; }
+        .ob-title { font-size: 2.2rem; font-weight: 900; margin-bottom: 10px; line-height: 1.1; }
+        .ob-desc { font-size: 1.05rem; color: #CBD5E1; margin-bottom: 30px; line-height: 1.5; }
+        .ob-dots { display: flex; gap: 8px; margin-bottom: 30px; }
+        .dot { width: 10px; height: 10px; background: rgba(255,255,255,0.3); border-radius: 50%; transition: 0.3s; }
+        .dot.active { width: 30px; background: var(--v-green); border-radius: 5px; }
+        .btn-main { width: 100%; padding: 18px; border-radius: 16px; background: var(--v-green); color: white; font-size: 1.2rem; font-weight: 800; border: none; cursor: pointer; transition: 0.2s; box-shadow: 0 8px 15px rgba(16,185,129,0.3); }
+        .btn-main:active { transform: scale(0.96); }
+
+        /* 3. AUTH SCREENS (Register/Login) */
+        .auth-header { padding: 40px 24px 20px; text-align: left; }
+        .auth-title { font-size: 2rem; font-weight: 900; color: var(--v-navy); line-height: 1.1; }
+        .auth-sub { font-size: 1rem; color: var(--text-muted); margin-top: 5px; font-weight: 600; }
+        .form-area { padding: 0 24px 40px; }
+        .input-group { margin-bottom: 18px; }
+        .input-group label { display: block; font-size: 0.85rem; font-weight: 800; color: var(--v-navy); margin-bottom: 8px; }
+        .input-control { width: 100%; padding: 16px; border-radius: 14px; border: 2px solid #E2E8F0; background: white; font-size: 1rem; color: var(--text-dark); outline: none; transition: 0.2s; }
+        .input-control:focus { border-color: var(--v-green); }
+        .phone-flex { display: flex; gap: 10px; }
+        .phone-flex select { width: 35%; }
+        .phone-flex input { width: 65%; }
+        .err-text { color: var(--error); font-size: 0.8rem; font-weight: 700; margin-top: 5px; display: none; }
+        .auth-link { text-align: center; margin-top: 25px; font-weight: 700; color: var(--text-muted); }
+        .auth-link span { color: var(--v-green); cursor: pointer; }
+
+        /* 4. DASHBOARD (Yas Layout) */
+        #dashboard-screen { padding-bottom: 90px; }
+        .hero-section { background: var(--v-green); position: relative; padding-bottom: 80px; }
+        .hero-img { width: 100%; height: 240px; object-fit: cover; opacity: 0.85; mask-image: linear-gradient(to bottom, black 40%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, black 40%, transparent 100%); }
+        .top-bar { position: absolute; top: 0; left: 0; width: 100%; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; z-index: 10; }
+        .menu-btn { font-size: 1.6rem; color: var(--v-navy); cursor: pointer; }
+        .greeting { color: var(--v-navy); line-height: 1.1; margin-left: -20px; }
+        .greeting span { font-size: 0.9rem; font-weight: 800; font-style: italic; }
+        .greeting h2 { font-size: 1.1rem; font-weight: 700; display: flex; align-items: center; gap: 5px;}
+        .top-icons { display: flex; gap: 15px; color: var(--v-navy); font-size: 1.4rem; }
+        .bell { position: relative; }
+        .badge { position: absolute; top:-2px; right:-2px; width:10px; height:10px; background:var(--error); border-radius:50%; border: 2px solid var(--v-green); display: none; }
+
+        /* Balance Card */
+        .balance-card { background: var(--v-green); margin: -90px 24px 20px; padding: 24px; border-radius: 28px; position: relative; z-index: 15; box-shadow: 0 12px 25px rgba(16, 185, 129, 0.3); overflow: hidden; }
+        .balance-card::before { content: ''; position: absolute; right: -50px; top: -50px; width: 250px; height: 250px; background: rgba(255,255,255,0.15); border-radius: 50%; z-index: 0; }
+        .balance-card::after { content: ''; position: absolute; right: -20px; bottom: -80px; width: 200px; height: 200px; background: rgba(255,255,255,0.1); border-radius: 50%; z-index: 0; }
+        .bc-content { position: relative; z-index: 5; }
+        .bc-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .bc-title { color: var(--v-navy); font-size: 1rem; font-weight: 800; }
+        .vuna-logo-shape { background: var(--v-navy); color: var(--v-green); padding: 8px 16px; border-radius: 20px; font-weight: 900; font-size: 1.2rem; }
+        .bc-amount { font-size: 3rem; font-weight: 900; color: var(--v-navy); display: flex; align-items: center; gap: 8px; margin-top: 5px; letter-spacing: -1px; }
+        .bc-amount span { font-size: 1.2rem; font-weight: 700; }
+        .bc-icons { display: flex; gap: 20px; color: var(--v-navy); font-size: 1.5rem; margin-top: 10px; }
+        .bc-icons i { cursor: pointer; transition: transform 0.5s ease; }
+        
+        .bc-stats { display: flex; justify-content: space-between; margin-top: 30px; gap: 10px; }
+        .stat-box { flex: 1; }
+        .stat-item { color: var(--v-navy); font-size: 0.75rem; font-weight: 900; display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+        .stat-val { font-size: 1.1rem; }
+        .stat-bar { width: 100%; height: 5px; background: rgba(15, 23, 42, 0.2); border-radius: 3px; }
+        .stat-fill { height: 100%; background: var(--v-navy); border-radius: 3px; }
+
+        /* Quick Actions */
+        .quick-actions { display: flex; justify-content: space-between; padding: 0 24px; margin-bottom: 25px; }
+        .qa-btn { background: var(--white); width: 30%; padding: 18px 5px; border-radius: 16px; border: 1.5px solid #E2E8F0; display: flex; flex-direction: column; align-items: center; gap: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); cursor: pointer; transition: 0.2s; }
+        .qa-btn:active { transform: scale(0.95); }
+        .qa-icon { font-size: 1.8rem; color: var(--v-navy); }
+        .qa-text { font-size: 0.8rem; font-weight: 800; color: var(--v-navy); text-align: center; line-height: 1.2; }
+
+        /* Promo Banner */
+        .promo { margin: 0 24px 25px; border-radius: 20px; overflow: hidden; position: relative; background: linear-gradient(100deg, var(--v-green), var(--v-green-light)); height: 110px; display: flex; align-items: center; padding: 0 20px; box-shadow: 0 6px 15px rgba(16,185,129,0.2); }
+        .promo h3 { color: var(--v-navy); font-size: 1.2rem; font-weight: 900; font-style: italic; z-index: 2; width: 65%; line-height: 1.2; }
+        .promo img { position: absolute; right: -10px; bottom: 0; height: 120%; z-index: 1; mix-blend-mode: multiply; opacity: 0.9; }
+
+        /* Bottom Nav */
+        .bottom-nav { position: absolute; bottom: 0; width: 100%; background: var(--v-navy); display: flex; justify-content: space-between; align-items: center; padding: 15px 24px 25px; border-top-left-radius: 24px; border-top-right-radius: 24px; z-index: 50; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: rgba(255,255,255,0.6); font-size: 0.75rem; font-weight: 700; gap: 5px; cursor: pointer; }
+        .nav-item.active { color: var(--white); }
+        .nav-item i { font-size: 1.4rem; }
+        .nav-center { position: relative; top: -25px; width: 65px; height: 65px; background: var(--v-green); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 2rem; color: var(--v-navy); box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4); border: 6px solid var(--bg-light); cursor: pointer; transition: 0.2s; }
+        .nav-center:active { transform: scale(0.95); }
+
+        /* 5. SPIN SCREEN */
+        .spin-header { padding: 24px; display: flex; align-items: center; gap: 15px; font-size: 1.3rem; font-weight: 800; color: var(--v-navy); background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+        .wheel-container { position: relative; width: 320px; height: 320px; margin: 40px auto; }
+        .wheel { width: 100%; height: 100%; border-radius: 50%; border: 10px solid var(--white); box-shadow: 0 10px 20px rgba(0,0,0,0.1); background: conic-gradient( var(--v-green) 0 60deg, var(--v-navy) 60deg 120deg, var(--v-green) 120deg 180deg, var(--v-navy) 180deg 240deg, var(--v-green) 240deg 300deg, var(--v-navy) 300deg 360deg ); position: relative; transition: transform 3.5s cubic-bezier(0.2, 0.8, 0.2, 1); overflow: hidden; }
+        .w-text { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; transition: transform 3.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        .val { position: absolute; top: 15px; left: 50%; transform-origin: 50% 145px; font-weight: 900; font-size: 1.3rem; color: white; transform: translateX(-50%); }
+        .pointer { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 3rem; color: var(--error); z-index: 10; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.2)); }
+
+        /* TOAST */
+        #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--v-navy); color: white; padding: 14px 24px; border-radius: 30px; font-weight: 800; z-index: 10000; opacity: 0; pointer-events: none; transition: 0.3s; text-align: center; width: 90%; max-width: 350px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+        #toast.show { opacity: 1; top: 40px; }
+        .toast-success { background: var(--success) !important; }
+        .toast-error { background: var(--error) !important; }
+
+        /* Sidebar simple logic */
+        .sidebar-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(15,23,42,0.6); z-index: 99; opacity: 0; pointer-events: none; transition: 0.3s; }
+        .sidebar-overlay.show { opacity: 1; pointer-events: all; }
+        .sidebar { position: absolute; top:0; left:0; width: 85%; height: 100%; background: var(--white); z-index: 100; transform: translateX(-100%); transition: 0.4s; display: flex; flex-direction: column; }
+        .sidebar.open { transform: translateX(0); }
+        .sb-header { background: var(--v-green); padding: 50px 24px 24px; display: flex; align-items: center; gap: 15px; border-bottom-right-radius: 30px; }
+        .sb-avatar { width: 65px; height: 65px; background: #E2E8F0; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.8rem; font-weight: 900; color: var(--v-navy); }
+        .sb-name { font-size: 1.2rem; font-weight: 900; color: var(--v-navy); }
+        .sb-menu { padding: 20px; font-weight: 800; color: var(--v-navy); }
+
+    </style>
+</head>
+<body>
+
+<div id="app-frame">
+
+    <!-- TOAST -->
+    <div id="toast">Ujumbe Hapa</div>
+
+    <!-- 1. SPLASH SCREEN -->
+    <div id="splash-screen" class="screen active-screen">
+        <div class="vuna-logo-large"><i class="fas fa-leaf"></i> VUNA</div>
+        <div class="loading-bar-bg"><div class="loading-fill"></div></div>
+        <p style="color: rgba(255,255,255,0.5); font-weight: 700; margin-top: 15px;">Inapakia...</p>
+    </div>
+
+    <!-- 2. ONBOARDING SCREEN -->
+    <div id="onboarding-screen" class="screen hidden">
+        <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=600&q=80" id="ob-img" class="ob-bg">
+        <div class="ob-content">
+            <h1 class="ob-title" id="ob-title">Karibu Vuna Cash</h1>
+            <p class="ob-desc" id="ob-desc">Fanya tafiti mbalimbali na upate pesa moja kwa moja kwenye simu yako.</p>
+            <div class="ob-dots" id="ob-dots"></div>
+            <button class="btn-main" id="ob-btn" onclick="nextSlide()">Endelea <i class="fas fa-arrow-right"></i></button>
+        </div>
+    </div>
+
+    <!-- 3. REGISTER SCREEN -->
+    <div id="register-screen" class="screen hidden">
+        <div class="auth-header">
+            <h1 class="auth-title">Fungua Akaunti</h1>
+            <p class="auth-sub">Jaza taarifa zako kwa usahihi kuanza.</p>
+        </div>
+        <div class="form-area">
+            <div class="input-group">
+                <label>Majina Matatu (Muhimu)</label>
+                <input type="text" id="reg-name" class="input-control" placeholder="Mfn: Juma Ali Juma">
+                <div class="err-text" id="err-name">Tafadhali weka majina matatu kamili.</div>
+            </div>
+            <div class="input-group">
+                <label>Username</label>
+                <input type="text" id="reg-user" class="input-control" placeholder="Mfn: juma01">
+            </div>
+            <div class="input-group">
+                <label>Namba ya Simu</label>
+                <div class="phone-flex">
+                    <select class="input-control" style="padding: 16px 5px;"><option>+255</option><option>+254</option><option>+256</option></select>
+                    <input type="number" id="reg-phone" class="input-control" placeholder="712345678">
+                </div>
+            </div>
+            <div class="input-group">
+                <label>Barua Pepe (Email)</label>
+                <input type="email" id="reg-email" class="input-control" placeholder="mfano@email.com">
+            </div>
+            <div class="input-group">
+                <label>Mtandao Unaotumia</label>
+                <select id="reg-net" class="input-control">
+                    <option value="">Chagua Mtandao</option>
+                    <option value="Vodacom">Vodacom</option>
+                    <option value="Airtel">Airtel</option>
+                    <option value="Halotel">Halotel</option>
+                    <option value="Tigo">Mixx by yas (Tigo)</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Nenosiri</label>
+                <input type="password" id="reg-pass" class="input-control" placeholder="Weka nenosiri">
+            </div>
+            <button class="btn-main" onclick="registerUser()">Jisajili</button>
+            <div class="auth-link">Tayari una akaunti? <span onclick="navTo('login-screen')">Ingia hapa</span></div>
+        </div>
+    </div>
+
+    <!-- 4. LOGIN SCREEN -->
+    <div id="login-screen" class="screen hidden">
+        <div class="auth-header" style="margin-top: 40px;">
+            <h1 class="auth-title">Karibu Tena</h1>
+            <p class="auth-sub">Ingia kuendelea kutengeneza pesa.</p>
+        </div>
+        <div class="form-area">
+            <div class="input-group">
+                <label>Username</label>
+                <input type="text" id="log-user" class="input-control" placeholder="Weka username">
+            </div>
+            <div class="input-group">
+                <label>Nenosiri</label>
+                <input type="password" id="log-pass" class="input-control" placeholder="Weka nenosiri">
+            </div>
+            <button class="btn-main" style="margin-top: 20px;" onclick="loginUser()">Ingia Ndani</button>
+            <div class="auth-link">Huna akaunti? <span onclick="navTo('register-screen')">Jisajili</span></div>
+        </div>
+    </div>
+
+    <!-- 5. DASHBOARD SCREEN (Yas Layout) -->
+    <div id="dashboard-screen" class="screen hidden">
+        <div class="hero-section">
+            <img src="https://images.unsplash.com/photo-1573164713988-8665fc963095?auto=format&fit=crop&w=600&q=80" class="hero-img">
+            <div class="top-bar">
+                <i class="fas fa-bars menu-btn" onclick="toggleSidebar()"></i>
+                <div class="greeting"><span>Karibu</span><br><h2 id="dash-greeting">Mtumiaji <i class="fas fa-chevron-down" style="font-size:0.8rem"></i></h2></div>
+                <div class="top-icons"><div class="bell" onclick="showToast('Huna taarifa mpya')"><i class="far fa-bell"></i><div class="badge" id="dash-badge"></div></div></div>
+            </div>
+        </div>
+
+        <div class="balance-card">
+            <div class="bc-content">
+                <div class="bc-header"><div class="bc-title">Salio Lako</div><div class="vuna-logo-shape">vuna</div></div>
+                <div class="bc-amount"><span id="dash-cash">0</span> <span id="dash-curr">TSH</span> <i class="fas fa-chevron-right" style="font-size: 1.5rem; margin-left: 5px;"></i></div>
+                <div class="bc-icons">
+                    <i class="fas fa-sync-alt" id="sync-icon" onclick="refreshBalance()"></i>
+                    <i class="far fa-eye-slash" id="eye-icon" onclick="toggleBalance()"></i>
+                </div>
+                <div class="bc-stats">
+                    <div class="stat-box">
+                        <div class="stat-item"><i class="fas fa-coins"></i> COINS <br><span class="stat-val" id="dash-coins">0</span></div>
+                        <div class="stat-bar"><div class="stat-fill" style="width: 70%"></div></div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-item"><i class="fas fa-tasks"></i> KAZI <br><span class="stat-val">0</span></div>
+                        <div class="stat-bar"><div class="stat-fill" style="width: 25%"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="quick-actions">
+            <div class="qa-btn" onclick="showToast('Salio halitoshi kutoa (Kima ni 25,00
